@@ -11,27 +11,67 @@ var DbCriteria = (function () {
     _classCallCheck(this, DbCriteria);
 
     this._criteria = criteria || {};
-    this._criteria.where = this._criteria.where || {};
+    this._criteria.where = this._criteria.where || [];
   }
 
   _createClass(DbCriteria, [{
-    key: 'where',
-    value: function where(key, value, or) {
-      var values = {};
-
-      if (_.isObject(key)) {
-        values = key;
-      } else if (key) {
-        values[key] = value;
+    key: '_constructWhereCondition',
+    value: function _constructWhereCondition(key, value, operator, or) {
+      return {
+        key: key,
+        value: value,
+        operator: operator,
+        or: !!or
+      };
+    }
+  }, {
+    key: '_addWhereCondition',
+    value: function _addWhereCondition(key, value, or) {
+      if (key instanceof DbCriteria) {
+        var _condition = {
+          where: key._criteria.where,
+          or: !!or
+        };
+        this._criteria.where.push(_condition);
+        return this;
       }
 
-      if (or || values.or) {
-        this._criteria.where.or = this._criteria.where.or || {};
-        _.extend(this._criteria.where.or, values);
-      } else if (values.and) {
-        _.extend(this._criteria.where, values.and);
+      var operator = 'eq';
+      if (_.isObject(value)) {
+        var pair = _.pairs(value)[0];
+        operator = pair[0];
+        value = pair[1];
+      }
+
+      var condition = this._constructWhereCondition(key, value, operator, or);
+
+      var currentCondition = _.findWhere(this._criteria.where, {
+        key: condition.key
+      });
+
+      if (currentCondition) {
+        _.extend(currentCondition, condition);
       } else {
-        _.extend(this._criteria.where, values);
+        this._criteria.where.push(condition);
+      }
+
+      return this;
+    }
+  }, {
+    key: 'where',
+    value: function where(key, value, or) {
+      var _this = this;
+
+      if (key instanceof DbCriteria) {
+        or = value;
+        this._addWhereCondition(key, null, or);
+      } else if (_.isObject(key)) {
+        or = value;
+        _.forEach(key, function (v, k) {
+          _this._addWhereCondition(k, v, or);
+        });
+      } else {
+        this._addWhereCondition(key, value, or);
       }
 
       return this;
@@ -41,7 +81,7 @@ var DbCriteria = (function () {
   return DbCriteria;
 })();
 
-var comparisons = ['gt', 'gte', 'lt', 'lte', 'ne', 'in', 'nin'];
+var comparisons = ['gt', 'gte', 'lt', 'lte', 'neq', 'in', 'nin'];
 
 _.each(comparisons, function (comparison) {
   DbCriteria.prototype[comparison] = function (value) {

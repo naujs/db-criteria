@@ -16,10 +16,20 @@ describe('DbCriteria', () => {
       criteria.where('a', 1);
       criteria.where('b', 2);
 
-      expectWhere({
-        a: 1,
-        b: 2
-      });
+      expectWhere([
+        {
+          key: 'a',
+          value: 1,
+          operator: 'eq',
+          or: false
+        },
+        {
+          key: 'b',
+          value: 2,
+          operator: 'eq',
+          or: false
+        }
+      ]);
     });
 
     it('should support object', () => {
@@ -28,97 +38,99 @@ describe('DbCriteria', () => {
         b: 2
       });
 
-      expectWhere({
-        a: 1,
-        b: 2
-      });
+      expectWhere([
+        {
+          key: 'a',
+          value: 1,
+          operator: 'eq',
+          or: false
+        },
+        {
+          key: 'b',
+          value: 2,
+          operator: 'eq',
+          or: false
+        }
+      ]);
     });
 
-    it('should merge `and` params', () => {
-      criteria.where({
-        and: {
-          a: 1,
-          b: 2
+    it('should support `or`', () => {
+      criteria.where('a', 1);
+      criteria.where('b', 2, true);
+
+      expectWhere([
+        {
+          key: 'a',
+          value: 1,
+          operator: 'eq',
+          or: false
+        },
+        {
+          key: 'b',
+          value: 2,
+          operator: 'eq',
+          or: true
         }
-      });
-
-      criteria.where({
-        and: {
-          c: 3,
-          d: 4
-        }
-      });
-
-      expectWhere({
-        a: 1,
-        b: 2,
-        c: 3,
-        d: 4
-      });
-
-      criteria.where('c', 9);
-
-      expectWhere({
-        a: 1,
-        b: 2,
-        c: 9,
-        d: 4
-      });
-    });
-
-    it('should merge `or` params', () => {
-      criteria.where({
-        a: 1,
-        b: 2
-      });
-
-      criteria.where('c', 3, true);
-
-      expectWhere({
-        a: 1,
-        b: 2,
-        or: {
-          c: 3
-        }
-      });
-
-      criteria.where('d', 4, true);
-      expectWhere({
-        a: 1,
-        b: 2,
-        or: {
-          c: 3,
-          d: 4
-        }
-      });
-
-      criteria.where('d', 5, true);
-      expectWhere({
-        a: 1,
-        b: 2,
-        or: {
-          c: 3,
-          d: 5
-        }
-      });
+      ]);
     });
 
     it('should support special comparison methods', () => {
       criteria.where('a', criteria.lt(10));
 
-      expectWhere({
-        a: {
-          'lt': 10
+      expectWhere([
+        {
+          key: 'a',
+          value: 10,
+          operator: 'lt',
+          or: false
         }
-      });
+      ]);
 
       criteria.where('a', criteria.gte(10));
 
-      expectWhere({
-        a: {
-          'gte': 10
+      expectWhere([
+        {
+          key: 'a',
+          value: 10,
+          operator: 'gte',
+          or: false
         }
-      });
+      ]);
+    });
+
+    it('should support nested criteria', () => {
+      var nestedCriteria = new DbCriteria();
+      nestedCriteria.where('a', 1);
+      nestedCriteria.where('b', 2);
+
+      criteria.where('c', 3);
+      criteria.where(nestedCriteria, true);
+
+      expectWhere([
+        {
+          key: 'c',
+          value: 3,
+          operator: 'eq',
+          or: false
+        },
+        {
+          where: [
+            {
+              key: 'a',
+              value: 1,
+              operator: 'eq',
+              or: false
+            },
+            {
+              key: 'b',
+              value: 2,
+              operator: 'eq',
+              or: false
+            }
+          ],
+          or: true
+        }
+      ]);
     });
   });
 });

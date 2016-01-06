@@ -5,25 +5,61 @@ var _ = require('lodash');
 class DbCriteria {
   constructor(criteria) {
     this._criteria = criteria || {};
-    this._criteria.where = this._criteria.where || {};
+    this._criteria.where = this._criteria.where || [];
+  }
+
+  _constructWhereCondition(key, value, operator, or) {
+    return {
+      key: key,
+      value: value,
+      operator: operator,
+      or: !!or
+    };
+  }
+
+  _addWhereCondition(key, value, or) {
+    if (key instanceof DbCriteria) {
+      let condition = {
+        where: key._criteria.where,
+        or: !!or
+      };
+      this._criteria.where.push(condition);
+      return this;
+    }
+
+    let operator = 'eq';
+    if (_.isObject(value)) {
+      let pair =  _.pairs(value)[0];
+      operator = pair[0];
+      value = pair[1];
+    }
+
+    let condition = this._constructWhereCondition(key, value, operator, or);
+
+    let currentCondition = _.findWhere(this._criteria.where, {
+      key: condition.key
+    });
+
+    if (currentCondition) {
+      _.extend(currentCondition, condition);
+    } else {
+      this._criteria.where.push(condition);
+    }
+
+    return this;
   }
 
   where(key, value, or) {
-    var values = {};
-
-    if (_.isObject(key)) {
-      values = key;
-    } else if (key) {
-      values[key] = value;
-    }
-
-    if (or || values.or) {
-      this._criteria.where.or = this._criteria.where.or || {};
-      _.extend(this._criteria.where.or, values);
-    } else if (values.and) {
-      _.extend(this._criteria.where, values.and);
+    if (key instanceof DbCriteria) {
+      or = value;
+      this._addWhereCondition(key, null, or);
+    } else if (_.isObject(key)) {
+      or = value;
+      _.forEach(key, (v, k) => {
+        this._addWhereCondition(k, v, or);
+      });
     } else {
-      _.extend(this._criteria.where, values);
+      this._addWhereCondition(key, value, or);
     }
 
     return this;
@@ -35,7 +71,7 @@ var comparisons = [
   'gte',
   'lt',
   'lte',
-  'ne',
+  'neq',
   'in',
   'nin'
 ];
