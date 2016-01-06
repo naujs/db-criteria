@@ -1,16 +1,16 @@
 var DbCriteria = require('../');
 
 describe('DbCriteria', () => {
+  var criteria;
+
+  beforeEach(() => {
+    criteria = new DbCriteria();
+  });
+
   describe('#where', () => {
-    var criteria;
-
     function expectWhere(where) {
-      expect(criteria._criteria.where).toEqual(where);
+      expect(criteria.getWhere()).toEqual(where);
     }
-
-    beforeEach(() => {
-      criteria = new DbCriteria();
-    });
 
     it('should generate and condition by default', () => {
       criteria.where('a', 1);
@@ -133,4 +133,11 @@ describe('DbCriteria', () => {
       ]);
     });
   });
+
+  describe('#fields', () => {
+    it('should remote duplicated fields', () => {
+
+    });
+  });
+
 });
