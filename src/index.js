@@ -7,6 +7,7 @@ class DbCriteria {
     this._criteria = criteria || {};
     this._criteria.where = this._criteria.where || [];
     this._criteria.order = this._criteria.order || {};
+    this._criteria.offset = this._criteria.offset !== void(0) ? this._criteria.offset : 0;
   }
 
   _constructWhereCondition(key, value, operator, or) {
@@ -87,6 +88,23 @@ class DbCriteria {
 
   getOrder() {
     return _.clone(this._criteria.order);
+  }
+
+  offset(offset) {
+    this._criteria.offset = offset;
+    return this;
+  }
+
+  getOffset() {
+    return this._criteria.offset;
+  }
+
+  limit(limit) {
+    this._criteria.limit = limit;
+  }
+
+  getLimit() {
+    return this._criteria.limit;
   }
 }
 

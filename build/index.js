@@ -13,6 +13,7 @@ var DbCriteria = (function () {
     this._criteria = criteria || {};
     this._criteria.where = this._criteria.where || [];
     this._criteria.order = this._criteria.order || {};
+    this._criteria.offset = this._criteria.offset !== void 0 ? this._criteria.offset : 0;
   }
 
   _createClass(DbCriteria, [{
@@ -108,6 +109,27 @@ var DbCriteria = (function () {
     key: 'getOrder',
     value: function getOrder() {
       return _.clone(this._criteria.order);
+    }
+  }, {
+    key: 'offset',
+    value: function offset(_offset) {
+      this._criteria.offset = _offset;
+      return this;
+    }
+  }, {
+    key: 'getOffset',
+    value: function getOffset() {
+      return this._criteria.offset;
+    }
+  }, {
+    key: 'limit',
+    value: function limit(_limit) {
+      this._criteria.limit = _limit;
+    }
+  }, {
+    key: 'getLimit',
+    value: function getLimit() {
+      return this._criteria.limit;
     }
   }]);
 
