@@ -146,4 +146,24 @@ describe('DbCriteria', () => {
     });
   });
 
+  describe('#order', () => {
+    it('should store order', () => {
+      criteria.order('a');
+      expect(criteria.getOrder()).toEqual({
+        a: false
+      });
+
+      criteria.order('a', true);
+      expect(criteria.getOrder()).toEqual({
+        a: true
+      });
+
+      criteria.order('b');
+      expect(criteria.getOrder()).toEqual({
+        a: true,
+        b: false
+      });
+    });
+  });
+
 });

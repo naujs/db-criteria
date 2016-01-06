@@ -6,6 +6,7 @@ class DbCriteria {
   constructor(criteria) {
     this._criteria = criteria || {};
     this._criteria.where = this._criteria.where || [];
+    this._criteria.order = this._criteria.order || {};
   }
 
   _constructWhereCondition(key, value, operator, or) {
@@ -77,6 +78,15 @@ class DbCriteria {
 
   getFields() {
     return _.clone(this._criteria.fields);
+  }
+
+  order(key, direction) {
+    this._criteria.order[key] = !!direction;
+    return this;
+  }
+
+  getOrder() {
+    return _.clone(this._criteria.order);
   }
 }
 

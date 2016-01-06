@@ -12,6 +12,7 @@ var DbCriteria = (function () {
 
     this._criteria = criteria || {};
     this._criteria.where = this._criteria.where || [];
+    this._criteria.order = this._criteria.order || {};
   }
 
   _createClass(DbCriteria, [{
@@ -96,6 +97,17 @@ var DbCriteria = (function () {
     key: 'getFields',
     value: function getFields() {
       return _.clone(this._criteria.fields);
+    }
+  }, {
+    key: 'order',
+    value: function order(key, direction) {
+      this._criteria.order[key] = !!direction;
+      return this;
+    }
+  }, {
+    key: 'getOrder',
+    value: function getOrder() {
+      return _.clone(this._criteria.order);
     }
   }]);
 
