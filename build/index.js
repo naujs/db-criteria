@@ -29,7 +29,7 @@ var DbCriteria = (function () {
     value: function _addWhereCondition(key, value, or) {
       if (key instanceof DbCriteria) {
         var _condition = {
-          where: key._criteria.where,
+          where: key.getWhereCondition(),
           or: !!or
         };
         this._criteria.where.push(_condition);
@@ -45,7 +45,7 @@ var DbCriteria = (function () {
 
       var condition = this._constructWhereCondition(key, value, operator, or);
 
-      var currentCondition = _.findWhere(this._criteria.where, {
+      var currentCondition = _.findWhere(this.getWhereCondition(), {
         key: condition.key
       });
 
@@ -75,6 +75,11 @@ var DbCriteria = (function () {
       }
 
       return this;
+    }
+  }, {
+    key: 'getWhereCondition',
+    value: function getWhereCondition() {
+      return _.clone(this._criteria.where);
     }
   }]);
 

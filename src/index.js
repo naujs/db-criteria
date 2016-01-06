@@ -20,7 +20,7 @@ class DbCriteria {
   _addWhereCondition(key, value, or) {
     if (key instanceof DbCriteria) {
       let condition = {
-        where: key._criteria.where,
+        where: key.getWhereCondition(),
         or: !!or
       };
       this._criteria.where.push(condition);
@@ -36,7 +36,7 @@ class DbCriteria {
 
     let condition = this._constructWhereCondition(key, value, operator, or);
 
-    let currentCondition = _.findWhere(this._criteria.where, {
+    let currentCondition = _.findWhere(this.getWhereCondition(), {
       key: condition.key
     });
 
@@ -63,6 +63,10 @@ class DbCriteria {
     }
 
     return this;
+  }
+
+  getWhereCondition() {
+    return _.clone(this._criteria.where);
   }
 }
 
