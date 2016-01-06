@@ -102,7 +102,19 @@ var DbCriteria = (function () {
   }, {
     key: 'order',
     value: function order(key, direction) {
-      this._criteria.order[key] = !!direction;
+      var _this2 = this;
+
+      var order = {};
+      if (_.isObject(key)) {
+        order = key;
+      } else {
+        order[key] = direction;
+      }
+
+      _.each(order, function (d, k) {
+        _this2._criteria.order[k] = !!d;
+      });
+
       return this;
     }
   }, {

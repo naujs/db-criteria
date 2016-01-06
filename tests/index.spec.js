@@ -164,6 +164,20 @@ describe('DbCriteria', () => {
         b: false
       });
     });
+
+    it('should support object param', () => {
+      criteria.order({
+        a: true,
+        b: false,
+        c: true
+      });
+
+      expect(criteria.getOrder()).toEqual({
+        a: true,
+        b: false,
+        c: true
+      });
+    });
   });
 
 });

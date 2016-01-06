@@ -82,7 +82,17 @@ class DbCriteria {
   }
 
   order(key, direction) {
-    this._criteria.order[key] = !!direction;
+    var order = {};
+    if (_.isObject(key)) {
+      order = key;
+    } else {
+      order[key] = direction;
+    }
+
+    _.each(order, (d, k) => {
+      this._criteria.order[k] = !!d;
+    });
+
     return this;
   }
 
