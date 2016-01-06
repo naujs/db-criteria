@@ -81,6 +81,22 @@ var DbCriteria = (function () {
     value: function getWhere() {
       return _.clone(this._criteria.where);
     }
+  }, {
+    key: 'fields',
+    value: function fields() {
+      for (var _len = arguments.length, params = Array(_len), _key = 0; _key < _len; _key++) {
+        params[_key] = arguments[_key];
+      }
+
+      params = _.flatten(params);
+      this._criteria.fields = _.chain(this._criteria.fields || []).union(params).uniq().value();
+      return this;
+    }
+  }, {
+    key: 'getFields',
+    value: function getFields() {
+      return _.clone(this._criteria.fields);
+    }
   }]);
 
   return DbCriteria;

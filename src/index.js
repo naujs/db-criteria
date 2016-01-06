@@ -68,6 +68,16 @@ class DbCriteria {
   getWhere() {
     return _.clone(this._criteria.where);
   }
+
+  fields(...params) {
+    params = _.flatten(params);
+    this._criteria.fields = _.chain(this._criteria.fields || []).union(params).uniq().value();
+    return this;
+  }
+
+  getFields() {
+    return _.clone(this._criteria.fields);
+  }
 }
 
 var comparisons = [

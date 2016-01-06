@@ -135,8 +135,14 @@ describe('DbCriteria', () => {
   });
 
   describe('#fields', () => {
-    it('should remote duplicated fields', () => {
+    it('should remove duplicated fields', () => {
+      criteria.fields('a', 'b', 'a');
+      expect(criteria.getFields()).toEqual(['a', 'b']);
+    });
 
+    it('should support array param', () => {
+      criteria.fields(['a', 'b', 'a']);
+      expect(criteria.getFields()).toEqual(['a', 'b']);
     });
   });
 
