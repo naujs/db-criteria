@@ -1,0 +1,25 @@
+{
+  "name": "@naujs/db-criteria",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naujs/db-criteria.git"
+  },
+  "author": "Tan Nguyen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/naujs/db-criteria/issues"
+  },
+  "homepage": "https://github.com/naujs/db-criteria#readme",
+  "devDependencies": {
+    "@naujs/gulp-tasks": "0.0.13"
+  },
+  "dependencies": {
+    "lodash": "^3.10.1"
+  }
+}
