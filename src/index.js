@@ -20,6 +20,8 @@ class DbCriteria {
   }
 
   _addWhereCondition(key, value, or) {
+    // If an instance of DbCriteria is passed,
+    // it should become a nested query
     if (key instanceof DbCriteria) {
       let condition = {
         where: key.getWhere(),
@@ -29,22 +31,27 @@ class DbCriteria {
       return this;
     }
 
-    let operator = 'eq';
+    // value can be an object for using extra operators
+    // For example:
+    // {
+    //    'gte': 1,
+    //    'lt': 10
+    // }
+    // By default the operators will be treated as AND. Specifying
+    // or = true will change it to OR
+    // TODO: support array, not sure how it should be?
     if (_.isObject(value)) {
-      let pair =  _.pairs(value)[0];
-      operator = pair[0];
-      value = pair[1];
-    }
+      _.each(value, (v, operator) => {
+        if (operator == 'or') {
+          return;
+        }
 
-    let condition = this._constructWhereCondition(key, value, operator, or);
-
-    let currentCondition = _.findWhere(this.getWhere(), {
-      key: condition.key
-    });
-
-    if (currentCondition) {
-      _.extend(currentCondition, condition);
+        let condition = this._constructWhereCondition(key, v, operator, value.or);
+        this._criteria.where.push(condition);
+      });
     } else {
+      // The default operator is equal
+      let condition = this._constructWhereCondition(key, value, 'eq', or);
       this._criteria.where.push(condition);
     }
 

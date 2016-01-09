@@ -29,31 +29,40 @@ var DbCriteria = (function () {
   }, {
     key: '_addWhereCondition',
     value: function _addWhereCondition(key, value, or) {
+      var _this = this;
+
+      // If an instance of DbCriteria is passed,
+      // it should become a nested query
       if (key instanceof DbCriteria) {
-        var _condition = {
+        var condition = {
           where: key.getWhere(),
           or: !!or
         };
-        this._criteria.where.push(_condition);
+        this._criteria.where.push(condition);
         return this;
       }
 
-      var operator = 'eq';
+      // value can be an object for using extra operators
+      // For example:
+      // {
+      //    'gte': 1,
+      //    'lt': 10
+      // }
+      // By default the operators will be treated as AND. Specifying
+      // or = true will change it to OR
+      // TODO: support array, not sure how it should be?
       if (_.isObject(value)) {
-        var pair = _.pairs(value)[0];
-        operator = pair[0];
-        value = pair[1];
-      }
+        _.each(value, function (v, operator) {
+          if (operator == 'or') {
+            return;
+          }
 
-      var condition = this._constructWhereCondition(key, value, operator, or);
-
-      var currentCondition = _.findWhere(this.getWhere(), {
-        key: condition.key
-      });
-
-      if (currentCondition) {
-        _.extend(currentCondition, condition);
+          var condition = _this._constructWhereCondition(key, v, operator, value.or);
+          _this._criteria.where.push(condition);
+        });
       } else {
+        // The default operator is equal
+        var condition = this._constructWhereCondition(key, value, 'eq', or);
         this._criteria.where.push(condition);
       }
 
@@ -62,7 +71,7 @@ var DbCriteria = (function () {
   }, {
     key: 'where',
     value: function where(key, value, or) {
-      var _this = this;
+      var _this2 = this;
 
       if (key instanceof DbCriteria) {
         or = value;
@@ -70,7 +79,7 @@ var DbCriteria = (function () {
       } else if (_.isObject(key)) {
         or = value;
         _.forEach(key, function (v, k) {
-          _this._addWhereCondition(k, v, or);
+          _this2._addWhereCondition(k, v, or);
         });
       } else {
         this._addWhereCondition(key, value, or);
@@ -102,7 +111,7 @@ var DbCriteria = (function () {
   }, {
     key: 'order',
     value: function order(key, direction) {
-      var _this2 = this;
+      var _this3 = this;
 
       var order = {};
       if (_.isObject(key)) {
@@ -112,7 +121,7 @@ var DbCriteria = (function () {
       }
 
       _.each(order, function (d, k) {
-        _this2._criteria.order[k] = !!d;
+        _this3._criteria.order[k] = !!d;
       });
 
       return this;

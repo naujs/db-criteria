@@ -92,6 +92,12 @@ describe('DbCriteria', () => {
         {
           key: 'a',
           value: 10,
+          operator: 'lt',
+          or: false
+        },
+        {
+          key: 'a',
+          value: 10,
           operator: 'gte',
           or: false
         }
