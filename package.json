@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/naujs/db-criteria#readme",
   "devDependencies": {
-    "@naujs/gulp-tasks": "0.0.13"
+    "@naujs/gulp-tasks": "^0.1.0"
   },
   "dependencies": {
     "lodash": "^3.10.1"
