@@ -31,6 +31,18 @@ class DbCriteria {
       return this;
     }
 
+    // When value is an array, this means that there are multiple conditions
+    // for this attribute, the conditions must be formatted to object
+    if (_.isArray(value)) {
+      var comparisons = {};
+      _.each(value, (v) => {
+        var pair = _.pairs(v)[0];
+        comparisons[pair[0]] = pair[1];
+      });
+      comparisons['or'] = !!or;
+      value = comparisons;
+    }
+
     // value can be an object for using extra operators
     // For example:
     // {
@@ -39,7 +51,6 @@ class DbCriteria {
     // }
     // By default the operators will be treated as AND. Specifying
     // or = true will change it to OR
-    // TODO: support array, not sure how it should be?
     if (_.isObject(value)) {
       _.each(value, (v, operator) => {
         if (operator == 'or') {

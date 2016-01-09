@@ -104,6 +104,50 @@ describe('DbCriteria', () => {
       ]);
     });
 
+    it('should support array of conditions using AND', () => {
+      criteria.where('a', [
+        criteria.lt(10),
+        criteria.gt(100)
+      ]);
+
+      expectWhere([
+        {
+          key: 'a',
+          value: 10,
+          operator: 'lt',
+          or: false
+        },
+        {
+          key: 'a',
+          value: 100,
+          operator: 'gt',
+          or: false
+        }
+      ]);
+    });
+
+    it('should support array of conditions using OR', () => {
+      criteria.where('a', [
+        criteria.lt(10),
+        criteria.gt(100)
+      ], true);
+
+      expectWhere([
+        {
+          key: 'a',
+          value: 10,
+          operator: 'lt',
+          or: true
+        },
+        {
+          key: 'a',
+          value: 100,
+          operator: 'gt',
+          or: true
+        }
+      ]);
+    });
+
     it('should support nested criteria', () => {
       var nestedCriteria = new DbCriteria();
       nestedCriteria.where('a', 1);
