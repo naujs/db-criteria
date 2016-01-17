@@ -7,16 +7,50 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var _ = require('lodash');
 
 var DbCriteria = function () {
-  function DbCriteria(criteria) {
+  function DbCriteria() {
+    var criteria = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
     _classCallCheck(this, DbCriteria);
 
-    this._criteria = criteria || {};
-    this._criteria.where = this._criteria.where || [];
+    this._useOrByDefault = options.useOrByDefault;
+
+    this._criteria = criteria;
+    this._initWhereCondition(this._criteria.where);
     this._criteria.order = this._criteria.order || {};
     this._criteria.offset = this._criteria.offset !== void 0 ? this._criteria.offset : 0;
   }
 
   _createClass(DbCriteria, [{
+    key: '_initWhereCondition',
+    value: function _initWhereCondition(where) {
+      var _this = this;
+
+      this._criteria.where = [];
+
+      if (!where) {
+        return;
+      }
+
+      _.each(where, function (value, key) {
+        if (key == 'and') {
+          var andCondition = new DbCriteria({
+            where: value
+          });
+          _this.where(andCondition);
+        } else if (key == 'or') {
+          var orCondition = new DbCriteria({
+            where: value
+          }, {
+            useOrByDefault: true
+          });
+          _this.where(orCondition);
+        } else {
+          _this.where(key, value);
+        }
+      });
+    }
+  }, {
     key: '_constructWhereCondition',
     value: function _constructWhereCondition(key, value, operator, or) {
       return {
@@ -29,7 +63,7 @@ var DbCriteria = function () {
   }, {
     key: '_addWhereCondition',
     value: function _addWhereCondition(key, value, or) {
-      var _this = this;
+      var _this2 = this;
 
       // If an instance of DbCriteria is passed,
       // it should become a nested query
@@ -68,8 +102,8 @@ var DbCriteria = function () {
             return;
           }
 
-          var condition = _this._constructWhereCondition(key, v, operator, value.or);
-          _this._criteria.where.push(condition);
+          var condition = _this2._constructWhereCondition(key, v, operator, value.or);
+          _this2._criteria.where.push(condition);
         });
       } else {
         // The default operator is equal
@@ -82,7 +116,11 @@ var DbCriteria = function () {
   }, {
     key: 'where',
     value: function where(key, value, or) {
-      var _this2 = this;
+      var _this3 = this;
+
+      if (this._useOrByDefault && or === void 0) {
+        or = true;
+      }
 
       if (key instanceof DbCriteria) {
         or = value;
@@ -90,7 +128,7 @@ var DbCriteria = function () {
       } else if (_.isObject(key)) {
         or = value;
         _.forEach(key, function (v, k) {
-          _this2._addWhereCondition(k, v, or);
+          _this3._addWhereCondition(k, v, or);
         });
       } else {
         this._addWhereCondition(key, value, or);
@@ -122,7 +160,7 @@ var DbCriteria = function () {
   }, {
     key: 'order',
     value: function order(key, direction) {
-      var _this3 = this;
+      var _this4 = this;
 
       var order = {};
       if (_.isObject(key)) {
@@ -132,7 +170,7 @@ var DbCriteria = function () {
       }
 
       _.each(order, function (d, k) {
-        _this3._criteria.order[k] = !!d;
+        _this4._criteria.order[k] = !!d;
       });
 
       return this;

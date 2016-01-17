@@ -3,15 +3,212 @@ var DbCriteria = require('../');
 describe('DbCriteria', () => {
   var criteria;
 
+  function expectWhere(where) {
+    expect(criteria.getWhere()).toEqual(where);
+  }
+
   beforeEach(() => {
     criteria = new DbCriteria();
   });
 
-  describe('#where', () => {
-    function expectWhere(where) {
-      expect(criteria.getWhere()).toEqual(where);
-    }
+  describe('constructor', () => {
+    it('should allow to set limit, offset, order', () => {
+      criteria = new DbCriteria({
+        limit: 10,
+        offset: 20,
+        order: {
+          a: true,
+          b: false
+        }
+      });
 
+      expect(criteria.getLimit()).toEqual(10);
+      expect(criteria.getOffset()).toEqual(20);
+      expect(criteria.getOrder()).toEqual({
+        a: true,
+        b: false
+      });
+    });
+
+    it('should construct where conditions', () => {
+      criteria = new DbCriteria({
+        where: {
+          a: 1,
+          b: 2
+        }
+      });
+
+      expectWhere([
+        {
+          key: 'a',
+          value: 1,
+          operator: 'eq',
+          or: false
+        },
+        {
+          key: 'b',
+          value: 2,
+          operator: 'eq',
+          or: false
+        }
+      ]);
+    });
+
+    it('should support and grouping', () => {
+      criteria = new DbCriteria({
+        where: {
+          and: {
+            a: 1,
+            b: 2
+          }
+        }
+      });
+
+      expectWhere([
+        {
+          where: [
+            {
+              key: 'a',
+              value: 1,
+              operator: 'eq',
+              or: false
+            },
+            {
+              key: 'b',
+              value: 2,
+              operator: 'eq',
+              or: false
+            }
+          ],
+          or: false
+        }
+      ]);
+    });
+
+    it('should support and grouping and normal conditions', () => {
+      criteria = new DbCriteria({
+        where: {
+          and: {
+            a: 1,
+            b: 2
+          },
+          c: 3,
+          d: 4
+        }
+      });
+
+      expectWhere([
+        {
+          where: [
+            {
+              key: 'a',
+              value: 1,
+              operator: 'eq',
+              or: false
+            },
+            {
+              key: 'b',
+              value: 2,
+              operator: 'eq',
+              or: false
+            }
+          ],
+          or: false
+        },
+        {
+          key: 'c',
+          value: 3,
+          operator: 'eq',
+          or: false
+        },
+        {
+          key: 'd',
+          value: 4,
+          operator: 'eq',
+          or: false
+        }
+      ]);
+    });
+
+    it('should support or grouping', () => {
+      criteria = new DbCriteria({
+        where: {
+          or: {
+            a: 1,
+            b: 2
+          }
+        }
+      });
+
+      expectWhere([
+        {
+          where: [
+            {
+              key: 'a',
+              value: 1,
+              operator: 'eq',
+              or: true
+            },
+            {
+              key: 'b',
+              value: 2,
+              operator: 'eq',
+              or: true
+            }
+          ],
+          or: false
+        }
+      ]);
+    });
+
+    it('should support or grouping and normal conditions', () => {
+      criteria = new DbCriteria({
+        where: {
+          or: {
+            a: 1,
+            b: 2
+          },
+          c: 3,
+          d: 4
+        }
+      });
+
+      expectWhere([
+        {
+          where: [
+            {
+              key: 'a',
+              value: 1,
+              operator: 'eq',
+              or: true
+            },
+            {
+              key: 'b',
+              value: 2,
+              operator: 'eq',
+              or: true
+            }
+          ],
+          or: false
+        },
+        {
+          key: 'c',
+          value: 3,
+          operator: 'eq',
+          or: false
+        },
+        {
+          key: 'd',
+          value: 4,
+          operator: 'eq',
+          or: false
+        }
+      ]);
+    });
+
+  });
+
+  describe('#where', () => {
     it('should generate and condition by default', () => {
       criteria.where('a', 1);
       criteria.where('b', 2);
@@ -182,6 +379,29 @@ describe('DbCriteria', () => {
         }
       ]);
     });
+
+    it('should allow to specify or as the default logic in where conditions', () => {
+      criteria = new DbCriteria({}, {useOrByDefault: true});
+
+      criteria.where('a', 1);
+      criteria.where('b', 2);
+
+      expectWhere([
+        {
+          key: 'a',
+          value: 1,
+          operator: 'eq',
+          or: true
+        },
+        {
+          key: 'b',
+          value: 2,
+          operator: 'eq',
+          or: true
+        }
+      ]);
+    });
+
   });
 
   describe('#fields', () => {

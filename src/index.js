@@ -2,12 +2,41 @@
 
 var _ = require('lodash');
 
+
 class DbCriteria {
-  constructor(criteria) {
-    this._criteria = criteria || {};
-    this._criteria.where = this._criteria.where || [];
+  constructor(criteria = {}, options = {}) {
+    this._useOrByDefault = options.useOrByDefault;
+
+    this._criteria = criteria;
+    this._initWhereCondition(this._criteria.where);
     this._criteria.order = this._criteria.order || {};
     this._criteria.offset = this._criteria.offset !== void(0) ? this._criteria.offset : 0;
+  }
+
+  _initWhereCondition(where) {
+    this._criteria.where = [];
+
+    if (!where) {
+      return;
+    }
+
+    _.each(where, (value, key) => {
+      if (key == 'and') {
+        var andCondition = new DbCriteria({
+          where: value
+        });
+        this.where(andCondition);
+      } else if (key == 'or') {
+        var orCondition = new DbCriteria({
+          where: value
+        }, {
+          useOrByDefault: true
+        });
+        this.where(orCondition);
+      } else {
+        this.where(key, value);
+      }
+    });
   }
 
   _constructWhereCondition(key, value, operator, or) {
@@ -70,6 +99,10 @@ class DbCriteria {
   }
 
   where(key, value, or) {
+    if (this._useOrByDefault && or === void(0)) {
+      or = true;
+    }
+
     if (key instanceof DbCriteria) {
       or = value;
       this._addWhereCondition(key, null, or);
