@@ -15,10 +15,11 @@ var DbCriteria = function () {
 
     this._useOrByDefault = options.useOrByDefault;
 
-    this._criteria = criteria;
-    this._initWhereCondition(this._criteria.where);
-    this._criteria.order = this._criteria.order || {};
-    this._criteria.offset = this._criteria.offset !== void 0 ? this._criteria.offset : 0;
+    this._criteria = {};
+    this._initWhereCondition(criteria.where);
+    this._criteria.order = criteria.order || {};
+    this._criteria.offset = criteria.offset !== void 0 ? criteria.offset : 0;
+    this._criteria.limit = criteria.limit;
   }
 
   _createClass(DbCriteria, [{
@@ -37,14 +38,14 @@ var DbCriteria = function () {
           var andCondition = new DbCriteria({
             where: value
           });
-          _this.where(andCondition);
+          _this.where(andCondition, !!_this._useOrByDefault);
         } else if (key == 'or') {
           var orCondition = new DbCriteria({
             where: value
           }, {
             useOrByDefault: true
           });
-          _this.where(orCondition);
+          _this.where(orCondition, !!_this._useOrByDefault);
         } else {
           _this.where(key, value);
         }

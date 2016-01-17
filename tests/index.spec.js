@@ -206,6 +206,141 @@ describe('DbCriteria', () => {
       ]);
     });
 
+    it('should support or grouping and normal conditions in any order', () => {
+      criteria = new DbCriteria({
+        where: {
+          c: 3,
+          or: {
+            a: 1,
+            b: 2
+          },
+          d: 4
+        }
+      });
+
+      expectWhere([
+        {
+          key: 'c',
+          value: 3,
+          operator: 'eq',
+          or: false
+        },
+        {
+          where: [
+            {
+              key: 'a',
+              value: 1,
+              operator: 'eq',
+              or: true
+            },
+            {
+              key: 'b',
+              value: 2,
+              operator: 'eq',
+              or: true
+            }
+          ],
+          or: false
+        },
+        {
+          key: 'd',
+          value: 4,
+          operator: 'eq',
+          or: false
+        }
+      ]);
+    });
+
+    it('should support nested grouping conditions', () => {
+      criteria = new DbCriteria({
+        where: {
+          or: {
+            and: {
+              a: 1,
+              b: 2
+            },
+            c: 3
+          }
+        }
+      });
+
+      expectWhere([
+        {
+          where: [
+            {
+              where: [
+                {
+                  key: 'a',
+                  value: 1,
+                  operator: 'eq',
+                  or: false
+                },
+                {
+                  key: 'b',
+                  value: 2,
+                  operator: 'eq',
+                  or: false
+                }
+              ],
+              or: true
+            },
+            {
+              key: 'c',
+              value: 3,
+              operator: 'eq',
+              or: true
+            }
+          ],
+          or: false
+        }
+      ]);
+    });
+
+    it('should support nested grouping conditions in any order', () => {
+      criteria = new DbCriteria({
+        where: {
+          or: {
+            c: 3,
+            and: {
+              a: 1,
+              b: 2
+            }
+          }
+        }
+      });
+
+      expectWhere([
+        {
+          where: [
+            {
+              key: 'c',
+              value: 3,
+              operator: 'eq',
+              or: true
+            },
+            {
+              where: [
+                {
+                  key: 'a',
+                  value: 1,
+                  operator: 'eq',
+                  or: false
+                },
+                {
+                  key: 'b',
+                  value: 2,
+                  operator: 'eq',
+                  or: false
+                }
+              ],
+              or: true
+            }
+          ],
+          or: false
+        }
+      ]);
+    });
+
   });
 
   describe('#where', () => {
