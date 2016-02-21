@@ -27,7 +27,7 @@ var DbCriteria = function () {
     value: function _initWhereCondition(where) {
       var _this = this;
 
-      this._criteria.where = [];
+      this._criteria.where = this._criteria.where || [];
 
       if (!where) {
         return;
@@ -35,16 +35,30 @@ var DbCriteria = function () {
 
       _.each(where, function (value, key) {
         if (key == 'and') {
-          var andCondition = new DbCriteria({
-            where: value
+          if (!_.isArray(value)) {
+            value = [value];
+          }
+
+          var andCondition = new DbCriteria();
+
+          _.each(value, function (v) {
+            andCondition.where(v);
           });
+
           _this.where(andCondition, !!_this._useOrByDefault);
         } else if (key == 'or') {
-          var orCondition = new DbCriteria({
-            where: value
-          }, {
+          if (!_.isArray(value)) {
+            value = [value];
+          }
+
+          var orCondition = new DbCriteria({}, {
             useOrByDefault: true
           });
+
+          _.each(value, function (v) {
+            orCondition.where(v, true);
+          });
+
           _this.where(orCondition, !!_this._useOrByDefault);
         } else {
           _this.where(key, value);
@@ -129,7 +143,13 @@ var DbCriteria = function () {
       } else if (_.isObject(key)) {
         or = value;
         _.forEach(key, function (v, k) {
-          _this3._addWhereCondition(k, v, or);
+          if (k == 'and' || k == 'or') {
+            var _where = {};
+            _where[k] = v;
+            _this3._initWhereCondition(_where);
+          } else {
+            _this3._addWhereCondition(k, v, or);
+          }
         });
       } else {
         this._addWhereCondition(key, value, or);

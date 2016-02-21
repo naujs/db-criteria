@@ -15,7 +15,7 @@ class DbCriteria {
   }
 
   _initWhereCondition(where) {
-    this._criteria.where = [];
+    this._criteria.where = this._criteria.where || [];
 
     if (!where) {
       return;
@@ -23,16 +23,30 @@ class DbCriteria {
 
     _.each(where, (value, key) => {
       if (key == 'and') {
-        var andCondition = new DbCriteria({
-          where: value
+        if (!_.isArray(value)) {
+          value = [value];
+        }
+
+        var andCondition = new DbCriteria();
+
+        _.each(value, (v) => {
+          andCondition.where(v);
         });
+
         this.where(andCondition, !!this._useOrByDefault);
       } else if (key == 'or') {
-        var orCondition = new DbCriteria({
-          where: value
-        }, {
+        if (!_.isArray(value)) {
+          value = [value];
+        }
+
+        var orCondition = new DbCriteria({}, {
           useOrByDefault: true
         });
+
+        _.each(value, (v) => {
+          orCondition.where(v, true);
+        });
+
         this.where(orCondition, !!this._useOrByDefault);
       } else {
         this.where(key, value);
@@ -110,7 +124,13 @@ class DbCriteria {
     } else if (_.isObject(key)) {
       or = value;
       _.forEach(key, (v, k) => {
-        this._addWhereCondition(k, v, or);
+        if (k == 'and' || k == 'or') {
+          let where = {};
+          where[k] = v;
+          this._initWhereCondition(where);
+        } else {
+          this._addWhereCondition(k, v, or);
+        }
       });
     } else {
       this._addWhereCondition(key, value, or);

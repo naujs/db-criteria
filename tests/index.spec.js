@@ -341,6 +341,37 @@ describe('DbCriteria', () => {
       ]);
     });
 
+    it('should support or conditions for the same property', () => {
+      criteria = new DbCriteria({
+        where: {
+          or: [
+            {a: 1},
+            {a: 2}
+          ]
+        }
+      });
+
+      expectWhere([
+        {
+          where: [
+            {
+              key: 'a',
+              value: 1,
+              operator: 'eq',
+              or: true
+            },
+            {
+              key: 'a',
+              value: 2,
+              operator: 'eq',
+              or: true
+            }
+          ],
+          or: false
+        }
+      ]);
+    });
+
   });
 
   describe('#where', () => {
