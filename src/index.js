@@ -93,15 +93,17 @@ class DbCriteria {
     //    'gte': 1,
     //    'lt': 10
     // }
-    // By default the operators will be treated as AND. Specifying
-    // or = true will change it to OR
+    // By default, the join (OR/AND) between each operator is determined by
+    // the arg `or` passed in `where` unless specifically provided `or` param
+    // in the value
     if (_.isObject(value)) {
       _.each(value, (v, operator) => {
         if (operator == 'or') {
           return;
         }
 
-        let condition = this._constructWhereCondition(key, v, operator, value.or);
+        let _or = value.or === void(0) ? !!or : value.or;
+        let condition = this._constructWhereCondition(key, v, operator, _or);
         this._criteria.where.push(condition);
       });
     } else {

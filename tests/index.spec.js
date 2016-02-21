@@ -346,7 +346,7 @@ describe('DbCriteria', () => {
         where: {
           or: [
             {a: 1},
-            {a: 2}
+            {a: {gt: 2}}
           ]
         }
       });
@@ -363,7 +363,7 @@ describe('DbCriteria', () => {
             {
               key: 'a',
               value: 2,
-              operator: 'eq',
+              operator: 'gt',
               or: true
             }
           ],

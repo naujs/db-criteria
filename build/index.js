@@ -109,15 +109,17 @@ var DbCriteria = function () {
       //    'gte': 1,
       //    'lt': 10
       // }
-      // By default the operators will be treated as AND. Specifying
-      // or = true will change it to OR
+      // By default, the join (OR/AND) between each operator is determined by
+      // the arg `or` passed in `where` unless specifically provided `or` param
+      // in the value
       if (_.isObject(value)) {
         _.each(value, function (v, operator) {
           if (operator == 'or') {
             return;
           }
 
-          var condition = _this2._constructWhereCondition(key, v, operator, value.or);
+          var _or = value.or === void 0 ? !!or : value.or;
+          var condition = _this2._constructWhereCondition(key, v, operator, _or);
           _this2._criteria.where.push(condition);
         });
       } else {
