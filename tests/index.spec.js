@@ -7,19 +7,24 @@ describe('DbCriteria', () => {
     expect(criteria.getWhere()).toEqual(where);
   }
 
+  function expectInclude(include) {
+    expect(criteria.getInclude()).toEqual(include);
+  }
+
   beforeEach(() => {
     criteria = new DbCriteria();
   });
 
   describe('constructor', () => {
-    it('should allow to set limit, offset, order', () => {
+    it('should allow to set limit, offset, order, include', () => {
       criteria = new DbCriteria({
         limit: 10,
         offset: 20,
         order: {
           a: true,
           b: false
-        }
+        },
+        include: 'test1'
       });
 
       expect(criteria.getLimit()).toEqual(10);
@@ -28,6 +33,11 @@ describe('DbCriteria', () => {
         a: true,
         b: false
       });
+      expectInclude([
+        {
+          relation: 'test1'
+        }
+      ]);
     });
 
     it('should construct where conditions', () => {
@@ -613,6 +623,116 @@ describe('DbCriteria', () => {
         b: false,
         c: true
       });
+    });
+  });
+
+  fdescribe('#include', () => {
+    it('should support string', () => {
+      criteria.include('test');
+      expectInclude([
+        {
+          relation: 'test'
+        }
+      ]);
+    });
+
+    it('should support full form object', () => {
+      criteria.include({
+        relation: 'test1',
+        filter: {
+          where: {
+            a: 2
+          }
+        }
+      });
+      expectInclude([
+        {
+          relation: 'test1',
+          filter: {
+            where: {
+              a: 2
+            }
+          }
+        }
+      ]);
+    });
+
+    it('should support short form object with string value', () => {
+      criteria.include({
+        'test1': 'test2'
+      });
+      expectInclude([
+        {
+          relation: 'test1',
+          filter: {
+            include: 'test2'
+          }
+        }
+      ]);
+    });
+
+    it('should support short form object with array value', () => {
+      criteria.include({
+        'test1': ['field1', 'field2', 'field3']
+      });
+      expectInclude([
+        {
+          relation: 'test1',
+          filter: {
+            fields: ['field1', 'field2', 'field3']
+          }
+        }
+      ]);
+    });
+
+    it('should support short form object with object value', () => {
+      criteria.include({
+        'test1': {
+          where: {
+            a: 2
+          }
+        }
+      });
+      expectInclude([
+        {
+          relation: 'test1',
+          filter: {
+            where: {
+              a: 2
+            }
+          }
+        }
+      ]);
+    });
+
+    it('should support array of strings', () => {
+      criteria.include(['test1', 'test2']);
+      expectInclude([
+        {
+          relation: 'test1'
+        },
+        {
+          relation: 'test2'
+        }
+      ]);
+    });
+
+    it('should support mixed array of different formats', () => {
+      criteria.include(['test1', {'test2': ['field1', 'field2']}, {relation: 'test3'}]);
+      expectInclude([
+        {
+          relation: 'test1'
+        },
+        {
+          relation: 'test2',
+          filter: {
+            fields: ['field1', 'field2']
+          }
+        },
+        {
+          relation: 'test3'
+        }
+      ]);
     });
   });
 

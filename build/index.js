@@ -20,6 +20,9 @@ var DbCriteria = function () {
     this._criteria.order = criteria.order || {};
     this._criteria.offset = criteria.offset !== void 0 ? criteria.offset : 0;
     this._criteria.limit = criteria.limit;
+    if (criteria.include) {
+      this.include(criteria.include);
+    }
   }
 
   _createClass(DbCriteria, [{
@@ -223,6 +226,68 @@ var DbCriteria = function () {
     key: 'getLimit',
     value: function getLimit() {
       return this._criteria.limit;
+    }
+  }, {
+    key: 'include',
+    value: function include(relation) {
+      var _this5 = this;
+
+      this._criteria.include = this._criteria.include || [];
+      if (_.isString(relation)) {
+        // simple case: include('relatedModel');
+        relation = {
+          relation: relation
+        };
+        this._criteria.include.push(relation);
+      } else if (_.isArray(relation)) {
+        // an array of relations
+        // include(['relatedModel1', {'relatedModel2': ['field1', 'field2']}])
+        // include(['relatedModel1', {'relatedModel2': {'where': {}}}])
+        _.each(relation, function (r) {
+          _this5.include(r);
+        });
+      } else if (_.isObject(relation)) {
+        // full form
+        // include({relation: 'relatedModel1', filter: {}})
+        if (relation.relation) {
+          this._criteria.include.push(relation);
+        } else {
+          var keys = _.keys(relation);
+          _.each(keys, function (key) {
+            var r = relation[key];
+
+            if (_.isArray(r)) {
+              r = {
+                relation: key,
+                filter: {
+                  fields: r
+                }
+              };
+            } else if (_.isObject(r)) {
+              r = {
+                relation: key,
+                filter: r
+              };
+            } else {
+              r = {
+                relation: key,
+                filter: {
+                  include: r
+                }
+              };
+            }
+
+            _this5._criteria.include.push(r);
+          });
+        }
+      }
+
+      return this;
+    }
+  }, {
+    key: 'getInclude',
+    value: function getInclude() {
+      return this._criteria.include;
     }
   }]);
 
