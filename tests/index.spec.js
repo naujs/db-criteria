@@ -1,4 +1,136 @@
-var DbCriteria = require('../');
+'use strict';
+
+var DbCriteria = require('../')
+  , ActiveRecord = require('@naujs/active-record')
+  , Registry = require('@naujs/registry')
+  , _ = require('lodash');
+
+class Store extends ActiveRecord {}
+Store.properties = {
+  name: {
+    type: ActiveRecord.Types.string
+  }
+};
+Store.relations = {
+  products: {
+    type: 'hasMany',
+    model: 'Product',
+    foreignKey: 'store_id'
+  }
+};
+
+class Product extends ActiveRecord {}
+Product.properties = {
+  name: {
+    type: ActiveRecord.Types.string
+  }
+};
+
+Product.relations = {
+  'comments': {
+    type: 'hasMany',
+    model: 'Comment',
+    foreignKey: 'product_id'
+  },
+  'store': {
+    type: 'belongsTo',
+    model: 'Store',
+    foreignKey: 'store_id'
+  },
+  'tags': {
+    type: 'hasManyAndBelongsTo',
+    model: 'Tag',
+    through: 'ProductTag',
+    foreignKey: 'product_id'
+  }
+};
+
+class Comment extends ActiveRecord {}
+Comment.properties = {
+  content: {
+    type: ActiveRecord.Types.string
+  }
+};
+Comment.relations = {
+  'author': {
+    type: 'belongsTo',
+    model: 'User',
+    foreignKey: 'user_id'
+  },
+  'votes': {
+    type: 'hasMany',
+    model: 'Vote',
+    foreignKey: 'comment_id'
+  }
+};
+
+class Tag extends ActiveRecord {}
+Tag.properties = {
+  name: {
+    type: ActiveRecord.Types.string
+  }
+};
+
+class ProductTag extends ActiveRecord {}
+ProductTag.relations = {
+  'product': {
+    type: 'belongsTo',
+    model: 'Product',
+    foreignKey: 'product_id'
+  },
+  'tag': {
+    type: 'belongsTo',
+    model: 'Tag',
+    foreignKey: 'tag_id'
+  }
+};
+
+class User extends ActiveRecord {}
+User.properties = {
+  name: {
+    type: ActiveRecord.Types.string
+  }
+};
+User.relations = {
+  'comments': {
+    type: 'hasMany',
+    model: 'Comment',
+    foreignKey: 'user_id'
+  },
+  'votes': {
+    type: 'hasMany',
+    model: 'Vote',
+    foreignKey: 'user_id'
+  }
+};
+
+class Vote extends ActiveRecord {}
+Vote.properties = {
+  rating: {
+    type: ActiveRecord.Types.number
+  }
+};
+
+Vote.relations = {
+  comment: {
+    type: 'belongsTo',
+    model: 'Comment',
+    foreignKey: 'comment_id'
+  },
+  author: {
+    type: 'belongsTo',
+    model: 'User',
+    foreignKey: 'user_id'
+  }
+};
+
+Registry.setModel(Store);
+Registry.setModel(Product);
+Registry.setModel(Comment);
+Registry.setModel(Tag);
+Registry.setModel(User);
+Registry.setModel(Vote);
+Registry.setModel(ProductTag);
 
 describe('DbCriteria', () => {
   var criteria;
@@ -12,12 +144,12 @@ describe('DbCriteria', () => {
   }
 
   beforeEach(() => {
-    criteria = new DbCriteria();
+    criteria = new DbCriteria(Product);
   });
 
   describe('constructor', () => {
     it('should allow to set limit, offset, order, include', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         limit: 10,
         offset: 20,
         order: {
@@ -33,15 +165,15 @@ describe('DbCriteria', () => {
         a: true,
         b: false
       });
-      expectInclude([
-        {
-          relation: 'test1'
-        }
-      ]);
+      // expectInclude([
+      //   {
+      //     relation: 'test1'
+      //   }
+      // ]);
     });
 
     it('should construct where conditions', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           a: 1,
           b: 2
@@ -65,7 +197,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support and grouping', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           and: {
             a: 1,
@@ -96,7 +228,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support and grouping and normal conditions', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           and: {
             a: 1,
@@ -141,7 +273,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support or grouping', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           or: {
             a: 1,
@@ -172,7 +304,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support or grouping and normal conditions', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           or: {
             a: 1,
@@ -217,7 +349,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support or grouping and normal conditions in any order', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           c: 3,
           or: {
@@ -262,7 +394,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support nested grouping conditions', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           or: {
             and: {
@@ -307,7 +439,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support nested grouping conditions in any order', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           or: {
             c: 3,
@@ -352,7 +484,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support or conditions for the same property', () => {
-      criteria = new DbCriteria({
+      criteria = new DbCriteria(Product, {
         where: {
           or: [
             {a: 1},
@@ -522,7 +654,7 @@ describe('DbCriteria', () => {
     });
 
     it('should support nested criteria', () => {
-      var nestedCriteria = new DbCriteria();
+      var nestedCriteria = new DbCriteria(Product);
       nestedCriteria.where('a', 1);
       nestedCriteria.where('b', 2);
 
@@ -557,7 +689,7 @@ describe('DbCriteria', () => {
     });
 
     it('should allow to specify or as the default logic in where conditions', () => {
-      criteria = new DbCriteria({}, {useOrByDefault: true});
+      criteria = new DbCriteria(Product, {}, {useOrByDefault: true});
 
       criteria.where('a', 1);
       criteria.where('b', 2);
@@ -626,111 +758,239 @@ describe('DbCriteria', () => {
     });
   });
 
-  fdescribe('#include', () => {
+  describe('#include', () => {
     it('should support string', () => {
-      criteria.include('test');
+      criteria.include('store');
       expectInclude([
         {
-          relation: 'test'
+          relation: 'store',
+          modelName: 'Product',
+          type: 'belongsTo',
+          properties: ['name', 'id', 'store_id'],
+          through: null,
+          target: {
+            modelName: 'Store',
+            foreignKey: 'store_id',
+            referenceKey: 'id',
+            properties: ['name', 'id'],
+            criteria: null
+          }
         }
       ]);
     });
 
-    it('should support full form object', () => {
-      criteria.include({
-        relation: 'test1',
-        filter: {
-          where: {
-            a: 2
-          }
-        }
-      });
+    it('should support multiple relations', () => {
+      criteria.include('store');
+      criteria.include('comments');
       expectInclude([
         {
-          relation: 'test1',
+          relation: 'store',
+          modelName: 'Product',
+          type: 'belongsTo',
+          properties: ['name', 'id', 'store_id'],
+          through: null,
+          target: {
+            modelName: 'Store',
+            foreignKey: 'store_id',
+            referenceKey: 'id',
+            properties: ['name', 'id'],
+            criteria: null
+          }
+        },
+        {
+          relation: 'comments',
+          modelName: 'Product',
+          type: 'hasMany',
+          properties: ['name', 'id', 'store_id'],
+          through: null,
+          target: {
+            modelName: 'Comment',
+            foreignKey: 'product_id',
+            referenceKey: 'id',
+            properties: ['content', 'id', 'user_id'],
+            criteria: null
+          }
+        }
+      ]);
+    });
+
+    it('should support filter for the relation', () => {
+      criteria.include('store', {
+        where: {
+          name: 'test'
+        },
+        limit: 10
+      });
+
+      var _criteria = new DbCriteria(Store, {
+        where: {
+          name: 'test'
+        },
+        limit: 10
+      });
+
+      expectInclude([
+        {
+          relation: 'store',
+          modelName: 'Product',
+          type: 'belongsTo',
+          properties: ['name', 'id', 'store_id'],
+          through: null,
+          target: {
+            modelName: 'Store',
+            foreignKey: 'store_id',
+            referenceKey: 'id',
+            properties: ['name', 'id'],
+            criteria: _criteria
+          }
+        }
+      ]);
+    });
+
+    it('should support nested relation in string format', () => {
+      criteria.include('comments', {
+        include: 'author'
+      });
+
+      var _criteria = new DbCriteria(Comment, {
+        include: 'author'
+      });
+
+      expectInclude([
+        {
+          relation: 'comments',
+          modelName: 'Product',
+          type: 'hasMany',
+          properties: ['name', 'id', 'store_id'],
+          through: null,
+          target: {
+            modelName: 'Comment',
+            foreignKey: 'product_id',
+            referenceKey: 'id',
+            properties: ['content', 'id', 'user_id'],
+            criteria: _criteria
+          }
+        }
+      ]);
+    });
+
+    function expectIncludeParam(include, expected) {
+      expect(_.pick(include
+        , 'relation'
+        , 'modelName'
+        , 'type'
+        , 'properties')).toEqual(expected);
+    }
+
+    function expectIncludeTarget(target, expected) {
+      expect(_.pick(target
+        , 'foreignKey'
+        , 'modelName'
+        , 'referenceKey'
+        , 'properties')).toEqual(expected);
+    }
+
+    it('support deeply nested relations', () => {
+      criteria.include('comments', {
+        include: {
+          relation: 'votes',
           filter: {
-            where: {
-              a: 2
+            include: {
+              relation: 'author',
+              filter: {
+                where: {
+                  name: 'test'
+                }
+              }
             }
           }
         }
-      ]);
-    });
-
-    it('should support short form object with string value', () => {
-      criteria.include({
-        'test1': 'test2'
       });
-      expectInclude([
-        {
-          relation: 'test1',
-          filter: {
-            include: 'test2'
-          }
-        }
-      ]);
-    });
 
-    it('should support short form object with array value', () => {
-      criteria.include({
-        'test1': ['field1', 'field2', 'field3']
+      // first level
+      expect(criteria.getInclude().length).toEqual(1);
+      var include = criteria.getInclude()[0];
+      expectIncludeParam(include, {
+        relation: 'comments',
+        modelName: 'Product',
+        type: 'hasMany',
+        properties: ['name', 'id', 'store_id']
       });
-      expectInclude([
-        {
-          relation: 'test1',
-          filter: {
-            fields: ['field1', 'field2', 'field3']
-          }
-        }
-      ]);
-    });
 
-    it('should support short form object with object value', () => {
-      criteria.include({
-        'test1': {
-          where: {
-            a: 2
-          }
-        }
+      var target = include.target;
+      expectIncludeTarget(target, {
+        foreignKey: 'product_id',
+        modelName: 'Comment',
+        referenceKey: 'id',
+        properties: ['content', 'id', 'user_id']
       });
-      expectInclude([
+
+      // second level
+      expect(target.criteria.getInclude().length).toEqual(1);
+      include = target.criteria.getInclude()[0];
+      expectIncludeParam(include, {
+        relation: 'votes',
+        modelName: 'Comment',
+        type: 'hasMany',
+        properties: ['content', 'id', 'user_id']
+      });
+
+      target = include.target;
+      expectIncludeTarget(target, {
+        foreignKey: 'comment_id',
+        modelName: 'Vote',
+        referenceKey: 'id',
+        properties: ['rating', 'id', 'comment_id', 'user_id']
+      });
+
+      // third level
+      expect(target.criteria.getInclude().length).toEqual(1);
+      include = target.criteria.getInclude()[0];
+      expectIncludeParam(include, {
+        relation: 'author',
+        modelName: 'Vote',
+        type: 'belongsTo',
+        properties: ['rating', 'id', 'comment_id', 'user_id']
+      });
+
+      target = include.target;
+      expectIncludeTarget(target, {
+        foreignKey: 'user_id',
+        modelName: 'User',
+        referenceKey: 'id',
+        properties: ['name', 'id']
+      });
+
+      expect(target.criteria.getWhere()).toEqual([
         {
-          relation: 'test1',
-          filter: {
-            where: {
-              a: 2
-            }
-          }
+          key: 'name',
+          value: 'test',
+          operator: 'eq',
+          or: false
         }
       ]);
     });
 
-    it('should support array of strings', () => {
-      criteria.include(['test1', 'test2']);
+    it('should support many to many relationship', () => {
+      criteria.include('tags');
       expectInclude([
         {
-          relation: 'test1'
-        },
-        {
-          relation: 'test2'
-        }
-      ]);
-    });
-
-    it('should support mixed array of different formats', () => {
-      criteria.include(['test1', {'test2': ['field1', 'field2']}, {relation: 'test3'}]);
-      expectInclude([
-        {
-          relation: 'test1'
-        },
-        {
-          relation: 'test2',
-          filter: {
-            fields: ['field1', 'field2']
+          relation: 'tags',
+          modelName: 'Product',
+          type: 'hasManyAndBelongsTo',
+          properties: ['name', 'id', 'store_id'],
+          target: {
+            modelName: 'Tag',
+            properties: ['name', 'id'],
+            criteria: null,
+            foreignKey: 'tag_id',
+            referenceKey: 'id'
+          },
+          through: {
+            modelName: 'ProductTag',
+            foreignKey: 'product_id',
+            referenceKey: 'id'
           }
-        },
-        {
-          relation: 'test3'
         }
       ]);
     });

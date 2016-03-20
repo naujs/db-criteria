@@ -1,19 +1,20 @@
 'use strict';
 
-var _ = require('lodash');
-
+var _ = require('lodash')
+  , Registry = require('@naujs/registry');
 
 class DbCriteria {
-  constructor(criteria = {}, options = {}) {
+  constructor(Model, filter = {}, options = {}) {
+    this.Model = Model;
     this._useOrByDefault = options.useOrByDefault;
 
     this._criteria = {};
-    this._initWhereCondition(criteria.where);
-    this._criteria.order = criteria.order || {};
-    this._criteria.offset = criteria.offset !== void(0) ?criteria.offset : 0;
-    this._criteria.limit = criteria.limit;
-    if (criteria.include) {
-      this.include(criteria.include);
+    this._initWhereCondition(filter.where);
+    this._criteria.order = filter.order || {};
+    this._criteria.offset = filter.offset !== void(0) ? filter.offset : 0;
+    this._criteria.limit = filter.limit;
+    if (filter.include && !_.isEmpty(filter.include)) {
+      this._initInclude(filter.include);
     }
   }
 
@@ -30,7 +31,7 @@ class DbCriteria {
           value = [value];
         }
 
-        var andCondition = new DbCriteria();
+        var andCondition = new DbCriteria(this.Model);
 
         _.each(value, (v) => {
           andCondition.where(v);
@@ -42,7 +43,7 @@ class DbCriteria {
           value = [value];
         }
 
-        var orCondition = new DbCriteria({}, {
+        var orCondition = new DbCriteria(this.Model, {}, {
           useOrByDefault: true
         });
 
@@ -55,6 +56,35 @@ class DbCriteria {
         this.where(key, value);
       }
     });
+  }
+
+  _initInclude(include) {
+    if (_.isString(include)) {
+      this.include(include, null);
+    } else if (_.isArray(include)) {
+      // an array of relations
+      // ['relatedModel1', {'relatedModel2': ['field1', 'field2']}]
+      // ['relatedModel1', {'relatedModel2': {'where': {}}}]
+      _.each(include, (i) => {
+        if (_.isString(i)) {
+          this.include(i, null);
+        } else if (_.isObject(i) && !_.isArray(i)) {
+          _.each(i, (value, key) => {
+            var _filter = null;
+            if (_.isArray(value)) {
+              _filter.fields = value;
+            } else if (_.isObject(value)) {
+              _filter = value;
+            }
+            this.include(key, _filter);
+          });
+        }
+      });
+    } else if (_.isObject(include)) {
+      // full form
+      // {relation: 'relatedModel1', filter: {}}
+      this.include(include.relation, include.filter);
+    }
   }
 
   _constructWhereCondition(key, value, operator, or) {
@@ -83,7 +113,7 @@ class DbCriteria {
     if (_.isArray(value)) {
       var comparisons = {};
       _.each(value, (v) => {
-        var pair = _.pairs(v)[0];
+        var pair = _.toPairs(v)[0];
         comparisons[pair[0]] = pair[1];
       });
       comparisons['or'] = !!or;
@@ -194,56 +224,135 @@ class DbCriteria {
     return this._criteria.limit;
   }
 
-  include(relation) {
+  // criteria.include('comments', {where: {}, limit: 10})
+  include(relationName, filter) {
     this._criteria.include = this._criteria.include || [];
-    if (_.isString(relation)) {
-      // simple case: include('relatedModel');
-      relation = {
-        relation: relation
-      };
-      this._criteria.include.push(relation);
-    } else if (_.isArray(relation)) {
-      // an array of relations
-      // include(['relatedModel1', {'relatedModel2': ['field1', 'field2']}])
-      // include(['relatedModel1', {'relatedModel2': {'where': {}}}])
-      _.each(relation, (r) => {
-        this.include(r);
-      });
-    } else if (_.isObject(relation)) {
-      // full form
-      // include({relation: 'relatedModel1', filter: {}})
-      if (relation.relation) {
-        this._criteria.include.push(relation);
-      } else {
-        let keys = _.keys(relation);
-        _.each(keys, (key) => {
-          let r = relation[key];
-
-          if (_.isArray(r)) {
-            r = {
-              relation: key,
-              filter: {
-                fields: r
-              }
-            };
-          } else if (_.isObject(r)) {
-            r = {
-              relation: key,
-              filter: r
-            };
-          } else {
-            r = {
-              relation: key,
-              filter: {
-                include: r
-              }
-            };
-          }
-
-          this._criteria.include.push(r);
-        });
-      }
+    var Model = this.Model;
+    var relation = Model.relations[relationName];
+    if (!relation) {
+      return this;
     }
+
+    var RelatedModel = relation.modelClass || Registry.getModel(relation.model);
+    if (!RelatedModel) {
+      console.warn(`Related model is not found for relation ${relationName} of ${Model.getModelName()}`);
+      return this;
+    }
+
+    var includeData = {
+      relation: relationName,
+      modelName: Model.getModelName(),
+      type: relation.type,
+      properties: Model.getAllProperties()
+    };
+
+    var target = {};
+    var through = null;
+
+    // Sample https://gist.github.com/laoshanlung/8a358d7bf0ec73bb91f2
+    switch (relation.type) {
+      case 'hasManyAndBelongsTo':
+        var ThroughModel = Registry.getModel(relation.through);
+
+        if (!ThroughModel) {
+          console.warn(`Failed to include many-to-many ${relationName} relation without a through model ${relation.through}`);
+          return this;
+        }
+
+        through = {
+          modelName: ThroughModel.getModelName(),
+          foreignKey: relation.foreignKey,
+          referenceKey: relation.referenceKey || Model.getPrimaryKey()
+        };
+
+        target = {
+          modelName: RelatedModel.getModelName(),
+          properties: RelatedModel.getAllProperties(),
+          criteria: filter ? new DbCriteria(RelatedModel, filter) : null
+        };
+
+        var targetRelation = _.chain(ThroughModel.getRelations()).toPairs().find((pair) => {
+          var modelName = pair[1].modelClass ? pair[1].modelClass.getModelName() : pair[1].model;
+          return modelName == target.modelName;
+        }).value();
+
+        if (!targetRelation) {
+          console.warn(`Can't find model for hasManyAndBelongsTo ${relationName} relationship`);
+          return this;
+        }
+
+        var TargetModel = targetRelation[1].modelClass
+          ? targetRelation[1].modelClass
+          : Registry.getModel(targetRelation[1].model);
+
+        target.foreignKey = targetRelation[1].foreignKey;
+        target.referenceKey = targetRelation[1].referenceKey || TargetModel.getPrimaryKey();
+        break;
+      default:
+        target = {
+          modelName: RelatedModel.getModelName(),
+          foreignKey: relation.foreignKey,
+          referenceKey: relation.referenceKey || Model.getPrimaryKey(),
+          properties: RelatedModel.getAllProperties(),
+          criteria: filter ? new DbCriteria(RelatedModel, filter) : null
+        };
+        break;
+    }
+
+    includeData.target = target;
+    includeData.through = through;
+
+    this._criteria.include.push(includeData);
+    return this;
+
+    // if (_.isString(relation)) {
+    //   // simple case: include('relatedModel');
+    //   relation = {
+    //     relation: relation
+    //   };
+    //   this._criteria.include.push(relation);
+    // } else if (_.isArray(relation)) {
+    //   // an array of relations
+    //   // include(['relatedModel1', {'relatedModel2': ['field1', 'field2']}])
+    //   // include(['relatedModel1', {'relatedModel2': {'where': {}}}])
+    //   _.each(relation, (r) => {
+    //     this.include(r);
+    //   });
+    // } else if (_.isObject(relation)) {
+    //   // full form
+    //   // include({relation: 'relatedModel1', filter: {}})
+    //   if (relation.relation) {
+    //     this._criteria.include.push(relation);
+    //   } else {
+    //     let keys = _.keys(relation);
+    //     _.each(keys, (key) => {
+    //       let r = relation[key];
+    //
+    //       if (_.isArray(r)) {
+    //         r = {
+    //           relation: key,
+    //           filter: {
+    //             fields: r
+    //           }
+    //         };
+    //       } else if (_.isObject(r)) {
+    //         r = {
+    //           relation: key,
+    //           filter: r
+    //         };
+    //       } else {
+    //         r = {
+    //           relation: key,
+    //           filter: {
+    //             include: r
+    //           }
+    //         };
+    //       }
+    //
+    //       this._criteria.include.push(r);
+    //     });
+    //   }
+    // }
 
     return this;
   }
