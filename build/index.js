@@ -343,57 +343,6 @@ var DbCriteria = (function () {
 
       this._criteria.include.push(includeData);
       return this;
-
-      // if (_.isString(relation)) {
-      //   // simple case: include('relatedModel');
-      //   relation = {
-      //     relation: relation
-      //   };
-      //   this._criteria.include.push(relation);
-      // } else if (_.isArray(relation)) {
-      //   // an array of relations
-      //   // include(['relatedModel1', {'relatedModel2': ['field1', 'field2']}])
-      //   // include(['relatedModel1', {'relatedModel2': {'where': {}}}])
-      //   _.each(relation, (r) => {
-      //     this.include(r);
-      //   });
-      // } else if (_.isObject(relation)) {
-      //   // full form
-      //   // include({relation: 'relatedModel1', filter: {}})
-      //   if (relation.relation) {
-      //     this._criteria.include.push(relation);
-      //   } else {
-      //     let keys = _.keys(relation);
-      //     _.each(keys, (key) => {
-      //       let r = relation[key];
-      //
-      //       if (_.isArray(r)) {
-      //         r = {
-      //           relation: key,
-      //           filter: {
-      //             fields: r
-      //           }
-      //         };
-      //       } else if (_.isObject(r)) {
-      //         r = {
-      //           relation: key,
-      //           filter: r
-      //         };
-      //       } else {
-      //         r = {
-      //           relation: key,
-      //           filter: {
-      //             include: r
-      //           }
-      //         };
-      //       }
-      //
-      //       this._criteria.include.push(r);
-      //     });
-      //   }
-      // }
-
-      return this;
     }
   }, {
     key: 'getInclude',
