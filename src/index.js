@@ -325,13 +325,23 @@ class DbCriteria {
     return this._criteria.include;
   }
 
-  // attributes are used for create/update queries
-  // only those defined in the model are set
-  setAttributes(attributes) {
+  _checkModelProperties(attributes) {
     var properties = this.getModelClass().getAllProperties();
-    attributes = _.chain(attributes).toPairs().filter((pair) => {
+    return _.chain(attributes).toPairs().filter((pair) => {
       return _.indexOf(properties, pair[0]) != -1;
     }).fromPairs().value();
+  }
+
+  // attributes are used for create/update queries
+  // only those defined in the model are set
+  setAttributes(attributes, options = {}) {
+    if (!options.force) {
+      if (_.isArray(attributes)) {
+        attributes = _.map(attributes, this._checkModelProperties.bind(this));
+      } else {
+        attributes = this._checkModelProperties(attributes);
+      }
+    }
 
     this._criteria.attributes = attributes;
   }

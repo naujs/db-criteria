@@ -366,6 +366,14 @@ var DbCriteria = (function () {
     value: function getInclude() {
       return this._criteria.include;
     }
+  }, {
+    key: '_checkModelProperties',
+    value: function _checkModelProperties(attributes) {
+      var properties = this.getModelClass().getAllProperties();
+      return _.chain(attributes).toPairs().filter(function (pair) {
+        return _.indexOf(properties, pair[0]) != -1;
+      }).fromPairs().value();
+    }
 
     // attributes are used for create/update queries
     // only those defined in the model are set
@@ -373,10 +381,15 @@ var DbCriteria = (function () {
   }, {
     key: 'setAttributes',
     value: function setAttributes(attributes) {
-      var properties = this.getModelClass().getAllProperties();
-      attributes = _.chain(attributes).toPairs().filter(function (pair) {
-        return _.indexOf(properties, pair[0]) != -1;
-      }).fromPairs().value();
+      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+      if (!options.force) {
+        if (_.isArray(attributes)) {
+          attributes = _.map(attributes, this._checkModelProperties.bind(this));
+        } else {
+          attributes = this._checkModelProperties(attributes);
+        }
+      }
 
       this._criteria.attributes = attributes;
     }

@@ -996,4 +996,49 @@ describe('DbCriteria', () => {
     });
   });
 
+  describe('#setAttributes', () => {
+    it('should only set properties defined in the model', () => {
+      criteria.setAttributes({
+        name: 'ok',
+        invalid: 'value'
+      });
+
+      expect(criteria.getAttributes()).toEqual({
+        name: 'ok'
+      });
+    });
+
+    it('should allow force option to set undefined properties', () => {
+      criteria.setAttributes({
+        name: 'ok',
+        invalid: 'value'
+      }, {
+        force: true
+      });
+
+      expect(criteria.getAttributes()).toEqual({
+        name: 'ok',
+        invalid: 'value'
+      });
+    });
+
+    it('should support an array of values', () => {
+      criteria.setAttributes([
+        {
+          name: 'test1',
+          invalid: 'value'
+        },
+        {
+          name: 'test2',
+          invalid: 'value'
+        }
+      ]);
+
+      expect(criteria.getAttributes()).toEqual([
+        {name: 'test1'},
+        {name: 'test2'}
+      ]);
+    });
+  });
+
 });
