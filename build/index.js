@@ -8,13 +8,20 @@ var _ = require('lodash'),
     Registry = require('@naujs/registry');
 
 var DbCriteria = (function () {
-  function DbCriteria(Model) {
+  function DbCriteria(instanceOrClass) {
     var filter = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
     var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
     _classCallCheck(this, DbCriteria);
 
-    this.Model = Model;
+    if (_.isFunction(instanceOrClass.getClass)) {
+      this.Model = instanceOrClass.getClass();
+      this.modelInstance = instanceOrClass;
+    } else {
+      this.Model = instanceOrClass;
+      this.modelInstance = null;
+    }
+
     this._useOrByDefault = options.useOrByDefault;
 
     this._criteria = {};
@@ -28,6 +35,16 @@ var DbCriteria = (function () {
   }
 
   _createClass(DbCriteria, [{
+    key: 'getModelClass',
+    value: function getModelClass() {
+      return this.Model;
+    }
+  }, {
+    key: 'getModelInstance',
+    value: function getModelInstance() {
+      return this.modelInstance;
+    }
+  }, {
     key: '_initWhereCondition',
     value: function _initWhereCondition(where) {
       var _this = this;
@@ -348,6 +365,25 @@ var DbCriteria = (function () {
     key: 'getInclude',
     value: function getInclude() {
       return this._criteria.include;
+    }
+
+    // attributes are used for create/update queries
+    // only those defined in the model are set
+
+  }, {
+    key: 'setAttributes',
+    value: function setAttributes(attributes) {
+      var properties = this.getModelClass().getAllProperties();
+      attributes = _.chain(attributes).toPairs().filter(function (pair) {
+        return _.indexOf(properties, pair[0]) != -1;
+      }).fromPairs().value();
+
+      this._criteria.attributes = attributes;
+    }
+  }, {
+    key: 'getAttributes',
+    value: function getAttributes() {
+      return this._criteria.attributes;
     }
   }]);
 

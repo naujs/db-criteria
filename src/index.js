@@ -4,8 +4,15 @@ var _ = require('lodash')
   , Registry = require('@naujs/registry');
 
 class DbCriteria {
-  constructor(Model, filter = {}, options = {}) {
-    this.Model = Model;
+  constructor(instanceOrClass, filter = {}, options = {}) {
+    if (_.isFunction(instanceOrClass.getClass)) {
+      this.Model = instanceOrClass.getClass();
+      this.modelInstance = instanceOrClass;
+    } else {
+      this.Model = instanceOrClass;
+      this.modelInstance = null;
+    }
+
     this._useOrByDefault = options.useOrByDefault;
 
     this._criteria = {};
@@ -16,6 +23,14 @@ class DbCriteria {
     if (filter.include && !_.isEmpty(filter.include)) {
       this._initInclude(filter.include);
     }
+  }
+
+  getModelClass() {
+    return this.Model;
+  }
+
+  getModelInstance() {
+    return this.modelInstance;
   }
 
   _initWhereCondition(where) {
@@ -308,6 +323,21 @@ class DbCriteria {
 
   getInclude() {
     return this._criteria.include;
+  }
+
+  // attributes are used for create/update queries
+  // only those defined in the model are set
+  setAttributes(attributes) {
+    var properties = this.getModelClass().getAllProperties();
+    attributes = _.chain(attributes).toPairs().filter((pair) => {
+      return _.indexOf(properties, pair[0]) != -1;
+    }).fromPairs().value();
+
+    this._criteria.attributes = attributes;
+  }
+
+  getAttributes() {
+    return this._criteria.attributes;
   }
 }
 
