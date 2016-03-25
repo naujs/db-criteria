@@ -32,6 +32,8 @@ var DbCriteria = (function () {
     if (filter.include && !_.isEmpty(filter.include)) {
       this._initInclude(filter.include);
     }
+
+    this._filter = filter;
   }
 
   _createClass(DbCriteria, [{
@@ -406,6 +408,11 @@ var DbCriteria = (function () {
     key: 'getAttributes',
     value: function getAttributes() {
       return this._criteria.attributes;
+    }
+  }, {
+    key: 'getFilter',
+    value: function getFilter() {
+      return this._filter || {};
     }
   }]);
 

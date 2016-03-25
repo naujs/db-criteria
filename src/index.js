@@ -23,6 +23,8 @@ class DbCriteria {
     if (filter.include && !_.isEmpty(filter.include)) {
       this._initInclude(filter.include);
     }
+
+    this._filter = filter;
   }
 
   getModelClass() {
@@ -355,6 +357,10 @@ class DbCriteria {
 
   getAttributes() {
     return this._criteria.attributes;
+  }
+
+  getFilter() {
+    return this._filter || {};
   }
 }
 
