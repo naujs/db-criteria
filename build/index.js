@@ -234,10 +234,19 @@ var DbCriteria = (function () {
     value: function getFields() {
       return _.clone(this._criteria.fields);
     }
+
+    // direction can be either 1 or -1
+    // 1 is ASC
+    // -1 is DESC
+
   }, {
     key: 'order',
     value: function order(key, direction) {
       var _this5 = this;
+
+      if (!direction) {
+        direction = 1;
+      }
 
       var order = {};
       if (_.isObject(key)) {
@@ -247,7 +256,7 @@ var DbCriteria = (function () {
       }
 
       _.each(order, function (d, k) {
-        _this5._criteria.order[k] = !!d;
+        _this5._criteria.order[k] = d;
       });
 
       return this;

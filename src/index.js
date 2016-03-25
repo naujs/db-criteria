@@ -203,7 +203,14 @@ class DbCriteria {
     return _.clone(this._criteria.fields);
   }
 
+  // direction can be either 1 or -1
+  // 1 is ASC
+  // -1 is DESC
   order(key, direction) {
+    if (!direction) {
+      direction = 1;
+    }
+
     var order = {};
     if (_.isObject(key)) {
       order = key;
@@ -212,7 +219,7 @@ class DbCriteria {
     }
 
     _.each(order, (d, k) => {
-      this._criteria.order[k] = !!d;
+      this._criteria.order[k] = d;
     });
 
     return this;

@@ -728,32 +728,32 @@ describe('DbCriteria', () => {
     it('should store order', () => {
       criteria.order('a');
       expect(criteria.getOrder()).toEqual({
-        a: false
+        a: 1
       });
 
-      criteria.order('a', true);
+      criteria.order('a', -1);
       expect(criteria.getOrder()).toEqual({
-        a: true
+        a: -1
       });
 
       criteria.order('b');
       expect(criteria.getOrder()).toEqual({
-        a: true,
-        b: false
+        a: -1,
+        b: 1
       });
     });
 
     it('should support object param', () => {
       criteria.order({
-        a: true,
-        b: false,
-        c: true
+        a: 1,
+        b: -1,
+        c: 1
       });
 
       expect(criteria.getOrder()).toEqual({
-        a: true,
-        b: false,
-        c: true
+        a: 1,
+        b: -1,
+        c: 1
       });
     });
   });
