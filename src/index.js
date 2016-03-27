@@ -126,6 +126,15 @@ class DbCriteria {
       return this;
     }
 
+    // It is possible to pass nested criteria as where condition
+    // If that is the case, just push it to the condition list
+    if (value instanceof DbCriteria) {
+      // The default operator is equal
+      let condition = this._constructWhereCondition(key, value, 'eq', or);
+      this._criteria.where.push(condition);
+      return this;
+    }
+
     // When value is an array, this means that there are multiple conditions
     // for this attribute, the conditions must be formatted to object
     if (_.isArray(value)) {
