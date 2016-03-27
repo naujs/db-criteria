@@ -32,6 +32,7 @@ var DbCriteria = (function () {
     if (filter.include && !_.isEmpty(filter.include)) {
       this._initInclude(filter.include);
     }
+    this._criteria.fields = filter.fields || [];
 
     this._filter = filter;
   }
@@ -188,8 +189,13 @@ var DbCriteria = (function () {
     }
   }, {
     key: 'where',
-    value: function where(key, value, or) {
+    value: function where() {
+      var key = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
       var _this4 = this;
+
+      var value = arguments[1];
+      var or = arguments[2];
 
       if (this._useOrByDefault && or === void 0) {
         or = true;

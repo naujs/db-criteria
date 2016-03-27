@@ -23,6 +23,7 @@ class DbCriteria {
     if (filter.include && !_.isEmpty(filter.include)) {
       this._initInclude(filter.include);
     }
+    this._criteria.fields = filter.fields || [];
 
     this._filter = filter;
   }
@@ -165,7 +166,7 @@ class DbCriteria {
     return this;
   }
 
-  where(key, value, or) {
+  where(key = {}, value, or) {
     if (this._useOrByDefault && or === void(0)) {
       or = true;
     }
