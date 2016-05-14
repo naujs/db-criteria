@@ -312,12 +312,10 @@ var DbCriteria = (function () {
     value: function include(relationName, filter) {
       this._criteria.include = this._criteria.include || [];
       var Model = this.Model;
-      var relation = Model.relations[relationName];
-      if (!relation) {
-        return this;
-      }
+      var relation = Model.getRelations()[relationName];
+      if (!relation) return this;
 
-      var RelatedModel = relation.modelClass || Registry.getModel(relation.model);
+      var RelatedModel = relation.model;
       if (!RelatedModel) {
         console.warn('Related model is not found for relation ' + relationName + ' of ' + Model.getModelName());
         return this;
@@ -336,7 +334,7 @@ var DbCriteria = (function () {
       // Sample https://gist.github.com/laoshanlung/8a358d7bf0ec73bb91f2
       switch (relation.type) {
         case 'hasManyAndBelongsTo':
-          var ThroughModel = Registry.getModel(relation.through);
+          var ThroughModel = relation.through;
 
           if (!ThroughModel) {
             console.warn('Failed to include many-to-many ' + relationName + ' relation without a through model ' + relation.through);
@@ -356,8 +354,7 @@ var DbCriteria = (function () {
           };
 
           var targetRelation = _.chain(ThroughModel.getRelations()).toPairs().find(function (pair) {
-            var modelName = pair[1].modelClass ? pair[1].modelClass.getModelName() : pair[1].model;
-            return modelName == target.modelName;
+            return pair[1].model.getModelName() == target.modelName;
           }).value();
 
           if (!targetRelation) {
@@ -365,7 +362,7 @@ var DbCriteria = (function () {
             return this;
           }
 
-          var TargetModel = targetRelation[1].modelClass ? targetRelation[1].modelClass : Registry.getModel(targetRelation[1].model);
+          var TargetModel = targetRelation[1].model;
 
           target.foreignKey = targetRelation[1].foreignKey;
           target.referenceKey = targetRelation[1].referenceKey || TargetModel.getPrimaryKey();
